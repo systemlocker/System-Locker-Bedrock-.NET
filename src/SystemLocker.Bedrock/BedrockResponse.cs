@@ -12,6 +12,7 @@ public enum ResponseCode
     InvalidRequest,
     InvalidSystem,
     InvalidCredentials,
+    GoogleSsoRequired,
     UserNotVerified,
     InvalidKey,
     KeyFrozen,
@@ -59,6 +60,8 @@ public sealed class BedrockResponse
     public string? LicenseKeyHash { get; internal init; }
     public string? UsernameHash { get; internal init; }
     public string? TerminationMessage { get; internal init; }
+    /// <summary>Google SSO portal URL, on <see cref="ResponseCode.GoogleSsoRequired"/> denials.</summary>
+    public string? SsoUrl { get; internal init; }
     public string? InvisibleFolderToken { get; internal init; }
     public IReadOnlyDictionary<string, VariableValue> Variables { get; internal init; } =
         new Dictionary<string, VariableValue>();
@@ -74,6 +77,7 @@ internal static class ResponseCodes
         ["INVALID_REQUEST"] = ResponseCode.InvalidRequest,
         ["INVALID_SYSTEM"] = ResponseCode.InvalidSystem,
         ["INVALID_CREDENTIALS"] = ResponseCode.InvalidCredentials,
+        ["GOOGLE_SSO_REQUIRED"] = ResponseCode.GoogleSsoRequired,
         ["USER_NOT_VERIFIED"] = ResponseCode.UserNotVerified,
         ["INVALID_KEY"] = ResponseCode.InvalidKey,
         ["KEY_FROZEN"] = ResponseCode.KeyFrozen,

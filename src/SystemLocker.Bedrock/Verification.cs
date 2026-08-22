@@ -188,6 +188,7 @@ public static class Verification
             LicenseKeyHash = OptionalString("license_key_hash"),
             UsernameHash = OptionalString("username_hash"),
             TerminationMessage = OptionalString("termination_message"),
+            SsoUrl = OptionalString("sso_url"),
             InvisibleFolderToken = OptionalString("invisible_folder_token"),
             Variables = variables,
         };

@@ -84,6 +84,33 @@ if (result.Downloaded) lastRevision = result.Revision; // persist this
 `GetMetadataAsync`, and `DownloadIfNewAsync` (revision-checked) are
 available. Tokens live in memory only and clear on `ShutdownAsync`.
 
+## Google SSO (account authentication)
+
+Accounts created through Google sign-in have no local password on the
+server. A `username`/`password` authentication for such an account is
+answered with a signed `GOOGLE_SSO_REQUIRED` denial whose payload carries
+`sso_url` — the portal where the user completes Google sign-in and receives
+a system-specific password (valid 180 days) to use as their account
+password. There is no callback; the user transcribes the generated password
+into your login form and then attempts to login again.
+
+```csharp
+var result = await client.AuthenticateWithPasswordAsync(username, password);
+if (result.Response.Code == ResponseCode.GoogleSsoRequired)
+{
+    // The denial's URL is authoritative; open it in the default browser.
+    var portal = result.Response.SsoUrl ?? client.GoogleSsoUrl();
+    if (!GoogleSso.OpenUrl(portal))
+    {
+        Console.WriteLine($"Finish Google sign-in at: {portal}"); // headless fallback
+    }
+}
+```
+
+You can also start the flow before any denial: `client.BeginGoogleSso(out
+var opened)` (or `GoogleSso.Begin(systemId, out opened)`) opens the portal
+and returns its URL.
+
 ## Device identifiers (HWID)
 
 The library derives a hardware ID by default; set `config.Hwid = "1"` only to

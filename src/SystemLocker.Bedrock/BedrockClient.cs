@@ -129,6 +129,15 @@ public sealed class BedrockClient : IAsyncDisposable
         return AuthenticateAsync(fields, username, keyAuthentication: false, options ?? new InitializationOptions(), cancellationToken);
     }
 
+    // ── Google SSO ────────────────────────────────────────────────
+
+    /// <summary>Returns the Google SSO portal URL for the configured system.</summary>
+    public string GoogleSsoUrl() => GoogleSso.PortalUrl(_config.SystemId);
+
+    /// <summary>Opens the Google SSO portal for the configured system; see
+    /// <see cref="GoogleSso.Begin"/> for the result contract.</summary>
+    public string BeginGoogleSso(out bool opened) => GoogleSso.Begin(_config.SystemId, out opened);
+
     private async Task<AuthenticationResult> AuthenticateAsync(Dictionary<string, string> fields, string identity, bool keyAuthentication, InitializationOptions options, CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
