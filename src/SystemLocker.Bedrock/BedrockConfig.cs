@@ -12,6 +12,20 @@ public sealed class BedrockConfig
     /// <summary>Device identifier. Empty (the default) derives hardware factors; use "1" to disable device locking.</summary>
     public string Hwid { get; set; } = "";
 
+    /// <summary>How the device identifier is derived when Hwid is empty. The
+    /// default since 1.0.0 is "sl-hwid": the SL-HWID fault-tolerant threshold
+    /// module (opt out with "legacy" to restore the pre-1.0
+    /// hardware-factor hash). An explicit Hwid always takes precedence.</summary>
+    public string HwidMode { get; set; } = "sl-hwid";
+
+    /// <summary>Optionally redirects the SL-HWID module's storage to a
+    /// directory (files on every platform); empty uses the platform default.</summary>
+    public string? SLHwidStore { get; set; }
+
+    /// <summary>Names additional hard-locked SL-HWID slots beyond the
+    /// module's own persisted value (for example, "machine_guid").</summary>
+    public string[]? SLHwidExtraMandatory { get; set; }
+
     /// <summary>Heartbeat interval; 25–3600 seconds.</summary>
     public TimeSpan BeatRate { get; set; } = TimeSpan.FromSeconds(30);
 
@@ -28,7 +42,7 @@ public sealed class BedrockConfig
     public string InvisibleFolderBaseUrl { get; set; } = "https://invisiblefolder.net";
 
     /// <summary>User agent reported to the server.</summary>
-    public string UserAgent { get; set; } = "systemlocker-bedrock-dotnet/0.1";
+    public string UserAgent { get; set; } = "systemlocker-bedrock-dotnet/1.0";
 
     /// <summary>Optional program digest.</summary>
     public string? ProgramDigest { get; set; }

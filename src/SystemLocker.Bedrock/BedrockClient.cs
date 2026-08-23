@@ -47,11 +47,23 @@ public sealed class BedrockClient : IAsyncDisposable
     private BedrockSession? _session;
     private Action<HeartbeatFailure>? _failureHook;
     private readonly InvisibleFolder _invisibleFolder;
+    private readonly Dictionary<string, SLHwidSession> _ssSessions = new();
     private bool _disposed;
+
+    // Swappable in tests to drive the secret-sharing module without touching
+    // real hardware or storage.
+    internal static Func<SLHwidOptions, SLHwidSession>? SlHwidPrepareOverride { get; set; }
 
     public BedrockClient(BedrockConfig config, IHttpClient? http = null, Func<DateTimeOffset>? now = null)
     {
-        if (string.IsNullOrEmpty(config.Hwid))
+        if (config.HwidMode != "legacy" && config.HwidMode != "sl-hwid")
+        {
+            throw new BedrockError(ErrorKind.Configuration, "HWID mode must be \"legacy\" or \"sl-hwid\".");
+        }
+        // An explicit hwid always wins. With an empty hwid, "legacy" derives
+        // the pre-1.0 hardware hash eagerly; "sl-hwid" (the default since
+        // 1.0.0) defers to the SL-HWID module at authentication time.
+        if (string.IsNullOrEmpty(config.Hwid) && config.HwidMode == "legacy")
         {
             try
             {
@@ -81,6 +93,38 @@ public sealed class BedrockClient : IAsyncDisposable
         _config.SigningKeyId is null
             ? new Dictionary<string, string>()
             : new Dictionary<string, string> { ["X-Bedrock-Key-Id"] = _config.SigningKeyId };
+
+    // Recovers (or enrolls) the §4A module's HWID for the identity, cached
+    // per identity.
+    private SLHwidSession PrepareSecretSharing(string identity)
+    {
+        lock (_stateLock)
+        {
+            if (_ssSessions.TryGetValue(identity, out var cached))
+            {
+                return cached;
+            }
+        }
+        var sessionOptions = new SLHwidOptions
+        {
+            StorePath = _config.SLHwidStore ?? "",
+            ExtraMandatory = _config.SLHwidExtraMandatory ?? Array.Empty<string>(),
+        };
+        SLHwidSession session;
+        try
+        {
+            session = SlHwidPrepareOverride?.Invoke(sessionOptions) ?? SLHwid.Prepare(sessionOptions);
+        }
+        catch (Exception error) when (error is SLHwidDriftException or SLHwidCorruptDataException or InvalidOperationException)
+        {
+            throw new BedrockError(ErrorKind.LocalFailure, $"Secret-sharing HWID unavailable: {error.Message}");
+        }
+        lock (_stateLock)
+        {
+            _ssSessions[identity] = session;
+        }
+        return session;
+    }
 
     private static void ValidateConfig(BedrockConfig config)
     {
@@ -142,9 +186,17 @@ public sealed class BedrockClient : IAsyncDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
 
+        var hwidValue = _config.Hwid;
+        SLHwidSession? ssSession = null;
+        if (string.IsNullOrEmpty(hwidValue)) // secret_sharing mode: recover or enroll at auth time
+        {
+            ssSession = PrepareSecretSharing(identity);
+            hwidValue = ssSession.Hwid;
+        }
+
         var challenge = Verification.GenerateChallenge();
         fields["system"] = _config.SystemId;
-        fields["hwid"] = _config.Hwid;
+        fields["hwid"] = hwidValue;
         fields["version"] = _config.Version;
         fields["beatrate"] = ((int)_config.BeatRate.TotalSeconds).ToString();
         fields["challenge"] = challenge;
@@ -203,6 +255,11 @@ public sealed class BedrockClient : IAsyncDisposable
         {
             throw new BedrockError(ErrorKind.InvalidPayload, "Bedrock response identity hash does not match the authentication request.");
         }
+
+        // The server accepted this identity on this device: re-center the
+        // secret-sharing shares on the hardware observed this launch.
+        // Failures are non-fatal — the next launch re-derives.
+        ssSession?.Commit();
 
         BedrockSession? previous;
         lock (_stateLock)

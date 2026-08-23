@@ -12,8 +12,7 @@
 //     encodings and S >= L are rejected, which also blocks signature
 //     malleability.
 //
-// Validated against the RFC 8032 test vectors and the shared System Locker
-// conformance vectors.
+// Validated against the RFC 8032 test vectors 
 
 using System.Numerics;
 using System.Security.Cryptography;
@@ -21,7 +20,7 @@ using System.Security.Cryptography;
 namespace SystemLocker.Bedrock.ThirdParty.Ed25519;
 
 /// <summary>Ed25519 (RFC 8032) public-key signature verification.</summary>
-public static class Ed25519Verifier
+public static partial class Ed25519Verifier
 {
     private const int KeySize = 32;
     private const int SignatureSize = 64;
@@ -216,24 +215,6 @@ public static class Ed25519Verifier
         }
     }
 
-    // Test-support surface: the offline test suite signs fixtures with a
-    // signer built on the same point math (the production library only
-    // ever verifies).
-    internal static Point BasePoint => B;
-
-    internal static byte[] EncodePoint(Point point)
-    {
-        var zInverse = BigInteger.ModPow(point.Z, P - 2, P);
-        var y = point.Y * zInverse % P;
-        var x = point.X * zInverse % P;
-        var encoded = y.ToByteArray(); // little-endian, minimal length
-        Array.Resize(ref encoded, 32);
-        if (!x.IsEven)
-        {
-            encoded[31] |= 0x80;
-        }
-        return encoded;
-    }
 }
 
 internal static class BigIntegerModExtension

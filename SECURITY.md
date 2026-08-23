@@ -34,6 +34,17 @@ matter therefore live in the protocol, not in obfuscation:
   implemented (the response signature already provides the
   man-in-the-middle defense).
 
+## SL-HWID module
+
+The default threshold HWID module makes copied state and casual spoofing
+harder by requiring a stored enrollment plus enough current factors. Our
+objective is to reduce HWID churn from minor hardware changes, without
+reducing the strength of HWID as a locking mechanism.. It does
+not change the threat model for a determined local attacker, who can extract
+the client-held key like any client secret. The
+stored check word is domain-separated from the transmitted HWID, and the
+key itself is never persisted. .NET's garbage collector prevents deterministic in-memory wiping of every intermediate value (the same accepted limitation as credentials above).
+
 ## Reporting a vulnerability
 
 Report privately through the System Locker developer dashboard. Do not open
