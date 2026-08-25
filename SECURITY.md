@@ -37,13 +37,23 @@ matter therefore live in the protocol, not in obfuscation:
 ## SL-HWID module
 
 The default threshold HWID module makes copied state and casual spoofing
-harder by requiring a stored enrollment plus enough current factors. Our
-objective is to reduce HWID churn from minor hardware changes, without
-reducing the strength of HWID as a locking mechanism.. It does
-not change the threat model for a determined local attacker, who can extract
-the client-held key like any client secret. The
-stored check word is domain-separated from the transmitted HWID, and the
-key itself is never persisted. .NET's garbage collector prevents deterministic in-memory wiping of every intermediate value (the same accepted limitation as credentials above).
+harder by requiring a stored enrollment plus enough current recovery slots.
+Schema-v2 groups correlated platform, display, and software signals so one
+change in a group consumes at most one threshold slot. New enrollment and
+re-centering require at least eight slots; from eight upward, recovery uses a
+`ceil(70% of enrolled slots)` threshold and every mandatory slot must be
+present. Existing schema-v1 helpers keep their stored threshold until a
+successful authenticated commit migrates them.
+
+This reduces HWID churn from ordinary hardware changes but does not change
+the threat model for a determined local attacker who can read or patch the
+client process. Raw signals are not stored in the helper; it stores threshold
+shares. The random key itself is never persisted. .NET's garbage collector cannot
+deterministically wipe every intermediate value; managed runtimes, allocators,
+debuggers, crash reporters, or the operating system may retain copies.
+
+Applications using the same store share one enrollment and HWID. Protect that
+store and choose a separate explicit store when isolation is required.
 
 ## Reporting a vulnerability
 

@@ -136,6 +136,9 @@ re-absorbed after each successful authentication. The point is to prevent
 over-fitting to any single machine detail while avoiding over-dependence
 on the exact hardware configuration.
 
+Existing pre-v2 HWIDs remain recoverable with their stored schema and
+threshold; they migrate to the current schema after a successful commit.
+
 Keep the pre-1.0 behavior with `HwidMode = "legacy"`. A custom `Hwid` value (or "1" to
 disable device locking entirely) still wins over both modes.
 
@@ -149,13 +152,6 @@ every application sharing that storage.
 The HWID determination is deliberately best-effort, but it is expected to
 match runs of the same application, and, in most cases, across any
 application run on the same device and operating system.
-
-Storage lives in the Windows registry (`HKLM\SOFTWARE\SystemLocker`, with
-an HKCU fallback) and a per-user directory elsewhere. One factor — the
-module's own persisted value — is hard-locked: changing or deleting it
-always requires re-activation, since that is tampering rather than drift.
-Name additional hard-locked factors with `SLHwidExtraMandatory` (for example
-`machine_guid`).
 
 A hard lock chosen when the shared device state is enrolled cannot be
 weakened by another application.
