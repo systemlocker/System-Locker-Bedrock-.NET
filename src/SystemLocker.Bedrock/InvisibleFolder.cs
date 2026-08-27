@@ -86,12 +86,15 @@ public sealed class InvisibleFolder
             throw new BedrockError(ErrorKind.SessionTerminated, "No Invisible Folder token is available. Request one during initialization or a heartbeat.");
         }
 
+        // The download route is a plain GET; credentials travel in headers
+        // because GET request bodies are not supported.
         var url = _client.Endpoint(_client.Config.InvisibleFolderBaseUrl, "/a/") + referenceId;
-        var response = await _client.Transport.PostFormAsync(
-            url,
-            new[] { new KeyValuePair<string, string>("invisiblefolder_token", token) },
-            headers: null,
-            cancellationToken).ConfigureAwait(false);
+        var headers = new Dictionary<string, string>
+        {
+            ["X-Invisiblefolder-Download"] = "1",
+            ["X-Invisiblefolder-Token"] = token,
+        };
+        var response = await _client.Transport.GetAsync(url, headers, cancellationToken).ConfigureAwait(false);
         if (!response.Ok)
         {
             var message = ParseErrorMessage(response);
