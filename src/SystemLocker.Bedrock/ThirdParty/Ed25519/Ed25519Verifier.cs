@@ -9,8 +9,8 @@
 //     a verification takes a few milliseconds, which is irrelevant for
 //     license checks.
 //   - Strict decoding per RFC 8032 §5.1.7 guidance: non-canonical point
-//     encodings and S >= L are rejected, which also blocks signature
-//     malleability.
+//     encodings, points outside the prime-order subgroup, and S >= L are
+//     rejected, which also blocks signature malleability.
 //
 // Validated against the RFC 8032 test vectors 
 
@@ -50,6 +50,8 @@ public static partial class Ed25519Verifier
             BigInteger.Parse("15112221349535400772501151409588531511454012693041857206046113283949847762202"),
             BigInteger.Parse("46316835694926478169428394003475163141307993866256225615783033603165251855960")) % P);
 
+    private static readonly Point Identity = new(BigInteger.Zero, BigInteger.One, BigInteger.One, BigInteger.Zero);
+
     /// <summary>Verifies a raw Ed25519 signature (R || s) over the message.</summary>
     public static bool Verify(ReadOnlySpan<byte> publicKey, ReadOnlySpan<byte> signature, ReadOnlySpan<byte> message)
     {
@@ -63,9 +65,20 @@ public static partial class Ed25519Verifier
         {
             return false;
         }
+        // A pinned key still needs to be a non-identity member of the prime-
+        // order subgroup. Canonical curve decoding alone admits torsion and
+        // mixed-order points, including keys that permit trivial forgeries.
+        if (a.Equals(Identity) || !ScalarMultiply(L, a).Equals(Identity))
+        {
+            return false;
+        }
 
         Point r;
         if (!TryDecodePoint(signature[..KeySize], out r))
+        {
+            return false;
+        }
+        if (!ScalarMultiply(L, r).Equals(Identity))
         {
             return false;
         }

@@ -22,6 +22,8 @@ here under `ThirdParty/Ed25519/`.
 - **Strict decoding** (RFC 8032 §5.1.3/§5.1.7 guidance):
   - points with y ≥ p are rejected (non-canonical encodings),
   - a sign bit on x = 0 is rejected,
+  - the public key must be a non-identity member of the prime-order subgroup,
+    and the signature point R must also be in that subgroup,
   - scalars S ≥ L are rejected, which together with recomputing R blocks
     signature malleability.
 
@@ -33,6 +35,7 @@ The verifier is validated against:
 - tampered message / tampered signature rejection,
 - malleability (S + L) rejection,
 - non-canonical public-key rejection,
+- small-order public-key forgery rejection,
 - the shared cross-language conformance vectors, including bodies signed
   by an independent implementation (Go `crypto/ed25519`).
 
