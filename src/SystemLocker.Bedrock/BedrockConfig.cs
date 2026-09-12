@@ -42,7 +42,7 @@ public sealed class BedrockConfig
     public string InvisibleFolderBaseUrl { get; set; } = "https://invisiblefolder.net";
 
     /// <summary>User agent reported to the server.</summary>
-    public string UserAgent { get; set; } = "systemlocker-bedrock-dotnet/1.1.0";
+    public string UserAgent { get; set; } = "systemlocker-bedrock-dotnet/1.2.0";
 
     /// <summary>Optional program digest.</summary>
     public string? ProgramDigest { get; set; }
