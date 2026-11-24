@@ -94,7 +94,7 @@ public sealed class BedrockClient : IAsyncDisposable
             ? new Dictionary<string, string>()
             : new Dictionary<string, string> { ["X-Bedrock-Key-Id"] = _config.SigningKeyId };
 
-    // Recovers (or enrolls) the §4A module's HWID for the identity, cached
+    // Recovers (or enrolls) the SL-HWID module's HWID for the identity, cached
     // per identity.
     private SLHwidSession PrepareSecretSharing(string identity)
     {

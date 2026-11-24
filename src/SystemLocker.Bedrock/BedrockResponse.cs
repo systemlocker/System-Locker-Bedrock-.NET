@@ -35,6 +35,7 @@ public enum ResponseCode
     SigningKeyRevoked,
     ConcurrentHeartbeat,
     InternalError,
+    NightflyerLeaseActive,
 }
 
 /// <summary>A single server-side variable; <see cref="Found"/> distinguishes absent (JSON false) from an empty string.</summary>
@@ -99,6 +100,7 @@ internal static class ResponseCodes
         ["HEARTBEAT_VARIANCE_EXCEEDED"] = ResponseCode.HeartbeatVarianceExceeded,
         ["SIGNING_KEY_REVOKED"] = ResponseCode.SigningKeyRevoked,
         ["CONCURRENT_HEARTBEAT"] = ResponseCode.ConcurrentHeartbeat,
+        ["NIGHTFLYER_LEASE_ACTIVE"] = ResponseCode.NightflyerLeaseActive,
         ["INTERNAL_ERROR"] = ResponseCode.InternalError,
     };
 
